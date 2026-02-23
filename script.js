@@ -17,7 +17,7 @@ navLinks.querySelectorAll('a').forEach(link => {
 
 /* ─── SCROLL REVEAL ──────────────────────────────────────── */
 const revealEls = document.querySelectorAll(
-  '.section-title, .section-text, .stat, .event-card, .contact-form, .form-row, .form-group'
+  '.section-title, .section-text, .stat, .event-card, .contact-form, .form-row, .form-group, .gallery-item, .gallery-cta'
 );
 revealEls.forEach(el => el.classList.add('reveal'));
 
