@@ -6,7 +6,7 @@ window.addEventListener('scroll', () => {
 
 /* ─── MOBILE HAMBURGER ───────────────────────────────────── */
 const hamburger = document.getElementById('hamburger');
-const navLinks  = document.querySelector('.nav-links');
+const navLinks = document.querySelector('.nav-links');
 hamburger.addEventListener('click', () => {
   navLinks.classList.toggle('open');
 });
@@ -35,7 +35,7 @@ const observer = new IntersectionObserver(
 revealEls.forEach(el => observer.observe(el));
 
 /* ─── CONTACT FORM ───────────────────────────────────────── */
-const form     = document.getElementById('contactForm');
+const form = document.getElementById('contactForm');
 const feedback = document.getElementById('formFeedback');
 
 function validate(field) {
@@ -52,7 +52,7 @@ function validate(field) {
   return true;
 }
 
-// live validation
+// Live validation
 form.querySelectorAll('input, select, textarea').forEach(field => {
   field.addEventListener('blur', () => validate(field));
   field.addEventListener('input', () => {
@@ -60,31 +60,61 @@ form.querySelectorAll('input, select, textarea').forEach(field => {
   });
 });
 
-form.addEventListener('submit', e => {
+// Encode form data as URL-encoded string (required by Netlify Forms)
+function encode(data) {
+  return Object.keys(data)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+}
+
+form.addEventListener('submit', async e => {
   e.preventDefault();
+
+  // Client-side validation
   const fields = form.querySelectorAll('input[required], select[required], textarea[required]');
   let valid = true;
   fields.forEach(f => { if (!validate(f)) valid = false; });
 
   if (!valid) {
     feedback.textContent = 'Por favor completa todos los campos requeridos.';
-    feedback.className   = 'form-feedback error';
+    feedback.className = 'form-feedback error';
     return;
   }
 
-  // Simulate async send
   const btn = form.querySelector('.btn');
-  btn.textContent = 'Enviando...';
-  btn.disabled    = true;
+  btn.innerHTML = '<i data-lucide="loader-2"></i> Enviando...';
+  btn.disabled = true;
+  if (window.lucide) lucide.createIcons();
 
-  setTimeout(() => {
-    feedback.textContent = '¡Mensaje enviado! Nos pondremos en contacto pronto. 🎉';
-    feedback.className   = 'form-feedback success';
-    form.reset();
-    btn.textContent = 'Enviar mensaje';
-    btn.disabled    = false;
+  try {
+    const response = await fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: encode({
+        'form-name': 'contact',
+        name: form.name.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        subject: form.subject.value,
+        message: form.message.value,
+      }),
+    });
 
-    // clear feedback after 5s
-    setTimeout(() => { feedback.textContent = ''; feedback.className = 'form-feedback'; }, 5000);
-  }, 1200);
+    if (response.ok) {
+      feedback.textContent = '¡Mensaje enviado! Nos pondremos en contacto pronto. 🎉';
+      feedback.className = 'form-feedback success';
+      form.reset();
+    } else {
+      throw new Error(`Status ${response.status}`);
+    }
+  } catch (err) {
+    console.error('Netlify form error:', err);
+    feedback.textContent = 'Ocurrió un error al enviar. Intenta de nuevo o contáctanos por WhatsApp.';
+    feedback.className = 'form-feedback error';
+  } finally {
+    btn.innerHTML = '<i data-lucide="send"></i> Enviar mensaje';
+    btn.disabled = false;
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => { feedback.textContent = ''; feedback.className = 'form-feedback'; }, 6000);
+  }
 });
