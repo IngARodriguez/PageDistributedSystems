@@ -75,7 +75,9 @@
         <div class="container">
             <h2 class="section-title">Contáctanos</h2>
             <p class="section-text">Reservas, eventos privados o cualquier consulta — estamos aquí.</p>
-            <form class="contact-form" id="contactForm" novalidate>
+            <form class="contact-form" id="contactForm" name="contact" netlify novalidate>
+                <!-- Required by Netlify for AJAX submissions -->
+                <input type="hidden" name="form-name" value="contact" />
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">Nombre</label>
@@ -159,6 +161,4 @@
     <script>lucide.createIcons();</script>
 </body>
 
-
 </html>
-
