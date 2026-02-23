@@ -16,23 +16,63 @@ navLinks.querySelectorAll('a').forEach(link => {
 });
 
 /* ─── SCROLL REVEAL ──────────────────────────────────────── */
-const revealEls = document.querySelectorAll(
-  '.section-title, .section-text, .stat, .event-card, .contact-form, .form-row, .form-group, .gallery-item, .gallery-cta'
-);
-revealEls.forEach(el => el.classList.add('reveal'));
 
-const observer = new IntersectionObserver(
+// Map: CSS selector → animation direction for that group
+const revealGroups = [
+  { selector: '.section-title', dir: 'up' },
+  { selector: '.section-text', dir: 'up' },
+  { selector: '.event-card', dir: 'left' },
+  { selector: '.gallery-item', dir: 'up' },
+  { selector: '.gallery-cta', dir: 'up' },
+  { selector: '.contact-form', dir: 'right' },
+  { selector: '.contact-details', dir: 'left' },
+  { selector: '.map-wrapper', dir: 'right' },
+  { selector: '.stat', dir: 'scale' },
+];
+
+// Assign .reveal class + data-dir to each element
+revealGroups.forEach(({ selector, dir }) => {
+  document.querySelectorAll(selector).forEach(el => {
+    el.classList.add('reveal');
+    el.dataset.dir = dir;
+  });
+});
+
+// Build a single flat list of all reveal elements in DOM order
+const allRevealEls = Array.from(document.querySelectorAll('.reveal'));
+
+// Observe each element; stagger delay based on sibling index within its parent
+const revealObserver = new IntersectionObserver(
   entries => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 60);
-        observer.unobserve(entry.target);
-      }
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+
+      const el = entry.target;
+
+      // Compute sibling index among .reveal elements in same parent for stagger
+      const siblings = Array.from(el.parentElement.querySelectorAll(':scope > .reveal'));
+      const idx = siblings.indexOf(el);
+      const delay = idx >= 0 ? idx * 80 : 0;   // 80 ms between siblings
+
+      el.style.setProperty('--reveal-delay', `${delay}ms`);
+
+      // Small rAF so the delay custom property is applied before visible class
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => el.classList.add('visible'));
+      });
+
+      revealObserver.unobserve(el);
     });
   },
-  { threshold: 0.12 }
+  {
+    threshold: 0.08,
+    rootMargin: '0px 0px -60px 0px',  // triggers 60 px before element bottom hits viewport
+  }
 );
-revealEls.forEach(el => observer.observe(el));
+
+allRevealEls.forEach(el => revealObserver.observe(el));
+
+
 
 /* ─── CONTACT FORM ───────────────────────────────────────── */
 const form = document.getElementById('contactForm');
